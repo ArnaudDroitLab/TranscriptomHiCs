@@ -9,7 +9,7 @@
 #' @keywords internal
 setClass("TranscriptomHiCs",
          slots=list(promoters="GRanges",
-                    contacts="GRanges", 
+                    contacts="GInteractions", 
                     annotations="GRangesList",
                     structures="GRangesList"))
 
@@ -36,9 +36,7 @@ transcriptomHiCs <- function(promoters, contacts, annotations, structures=NULL) 
         res = add_annotation(res, annotations[[annot_name]], annot_name)
     }
 
-
-
-
+    res
 }
 
 #' Add an annotation to a TranscriptomHiCs object.
@@ -46,20 +44,22 @@ transcriptomHiCs <- function(promoters, contacts, annotations, structures=NULL) 
 #' @importFrom S4Vectors mcols
 #' @export
 add_annotation <- function(x, annotation, annot_name) {
-        regions(x@contacts) = annotate_count(regions(x@contacts), 
-                                             annotations[[annot_name]], 
-                                             annot_name)
-                                           
-        x@promoters = annotate_count(x@promoters, 
-                                     annotations[[annot_name]], 
-                                     annot_name)
-        
-        mcols(structures, level="within")[,annot_name] = 0
-        for(s_name in names(structures)) {
-            structures[[s_name]] = annotate_count(structures[[s_name]],
-                                                  annotations[[annot_name]], 
-                                                  annot_name)
-        }
+    regions(x@contacts) = annotate_count(regions(x@contacts), 
+                                         annotation, 
+                                         annot_name)
+                                       
+    x@promoters = annotate_count(x@promoters, 
+                                 annotation, 
+                                 annot_name)
+    
+    mcols(x@structures, level="within")[,annot_name] = 0
+    for(s_name in names(x@structures)) {
+        x@structures[[s_name]] = annotate_count(x@structures[[s_name]],
+                                                annotation, 
+                                                annot_name)
+    }
+    
+    x
 }
 
 #' Determine if promoters are window-bound by the given annotation.
@@ -117,7 +117,7 @@ is_contact_bound <- function(x, colname) {
 is_structure_bound = function(x, colname) {
     res = list()
     for(s_name in names(x@structures)) {
-        s_overlap = GenomicRanges::findOverlaps(x@promoters, input_TAD)
+        s_overlap = GenomicRanges::findOverlaps(x@promoters, x@structures[[s_name]])
         res[[s_name]] = rep(FALSE, length(x@promoters))
         res[[s_name]][queryHits(s_overlap)] = mcols(x@structures[[s_name]])[[colname]][subjectHits(s_overlap)] > 0
     }
@@ -129,9 +129,9 @@ is_structure_bound = function(x, colname) {
 #' @param x A TranscriptomHiCs object.
 #' @export
 distant_binding = function(x, annot_name) {
-    results=list(Window=is_window_bound(x, colname),
-                 Contact=is_contact_bound(x, colname),
-                 Structure=is_structure_bound(x, colname))
+    results=list(Window=is_window_bound(x, annot_name),
+                 Contact=is_contact_bound(x, annot_name),
+                 Structure=is_structure_bound(x, annot_name))
                  
     results
 }
@@ -142,12 +142,12 @@ distant_binding = function(x, annot_name) {
 #' @export
 annotate_distant_binding <- function(x, annot_name) {
     bind_info = distant_binding(x, annot_name)
-    mcols(promoters)[[paste0(annot_name, "_", "Window")]] = bind_info$Window
-    mcols(promoters)[[paste0(annot_name, "_", "Contact")]] = bind_info$Contact
+    mcols(x@promoters)[[paste0(annot_name, "_", "Window")]] = bind_info$Window
+    mcols(x@promoters)[[paste0(annot_name, "_", "Contact")]] = bind_info$Contact
     
     for(s_name in names(bind_info$Structure)) {
         s_col = paste0(annot_name, "_", s_name)
-        mcols(promoters)[[s_col]] = bind_info$Structure[[s_name]]
+        mcols(x@promoters)[[s_col]] = bind_info$Structure[[s_name]]
     }
     
     x
@@ -162,7 +162,7 @@ build_site_list = function(promoter_regions,
                            query_regions,
                            query_ids) {
     unique_query = unique(promoter_ids)
-    site_by_gene = lapply(unique_query, function(x) {
+    query_by_gene = lapply(unique_query, function(x) {
         query_regions[query_ids[promoter_ids==x] ]
     })
     names(query_by_gene) = names(promoter_regions)[unique_query]
