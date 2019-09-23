@@ -1,0 +1,17 @@
+Package: TranscriptomHiCs
+Title: Transcriptome and HiC integration
+Version: 0.1
+Authors@R: 
+    person(given = "Eric",
+           family = "Fournier",
+           role = c("aut", "cre"),
+           email = "ericfournier2@yahoo.ca")
+Description: Integrates transcriptomics and HiC data together.
+License: What license it uses
+Encoding: UTF-8
+LazyData: true
+Depends:
+    GenomicRanges,
+    InteractionSet
+Requires:
+RoxygenNote: 6.1.1
