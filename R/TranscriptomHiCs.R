@@ -1,17 +1,46 @@
-#' GenomicOverlaps objects represent the overlaps of multiple GRanges.
+#' TranscriptomHiCs class.
 #'
-#' @slot regions A GRanges object representing the combined regions.
-#' @slot matrix A matrix representing which elements overlap with the combined 
-#'              regions.
+#' @slot promoters Promoters.
+#' @slot contacts Contacts.
+#' @slot
+#' @slot 
 #'
-#' @name GenomicOverlaps-class
-#' @rdname GenomicOverlaps-class
-#' @keywords internal
+#' @name TranscriptomHiCs-class
+#' @rdname TranscriptomHiCs-class
 setClass("TranscriptomHiCs",
          slots=list(promoters="GRanges",
                     contacts="GInteractions", 
                     annotations="GRangesList",
                     structures="GRangesList"))
+
+#' Add an annotation to a TranscriptomHiCs object.
+#' @param x A TranscriptomHiCs object.
+#' @importFrom S4Vectors mcols
+#' @export
+promoters <- function(x) {
+    return(x@promoters)
+}
+
+#' Add an annotation to a TranscriptomHiCs object.
+#' @param x A TranscriptomHiCs object.
+#' @export
+contacts <- function(x) {
+    return(x@contacts)
+}
+
+#' Add an annotation to a TranscriptomHiCs object.
+#' @param x A TranscriptomHiCs object.
+#' @export
+annotations <- function(x) {
+    return(x@annotations)
+}
+
+#' Add an annotation to a TranscriptomHiCs object.
+#' @param x A TranscriptomHiCs object.
+#' @export
+structures <- function(x) {
+    return(x@structures)
+}
 
 #' Adds an annotation count column to a GRanges object.
 #' @importFrom S4Vectors mcols
